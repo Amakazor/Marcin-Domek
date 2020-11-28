@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Marcin_Domek.Src;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,6 +24,7 @@ namespace Marcin_Domek
     {
         public MainWindow()
         {
+            Client client = new Client();
             InitializeComponent();
         }
     }

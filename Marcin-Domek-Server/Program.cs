@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Marcin_Domek_Server.Src;
+using System;
 
 namespace Marcin_Domek_Server
 {
@@ -6,7 +7,8 @@ namespace Marcin_Domek_Server
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            DomekServer domekServer = new DomekServer();
+            domekServer.Loop();
         }
     }
 }

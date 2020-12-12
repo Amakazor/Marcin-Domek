@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.IO;
+using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -10,18 +11,33 @@ namespace Marcin_Domek_Server.Src.Extension
         {
             XmlSerializerNamespaces namespaces = removeDefaultXmlNamespaces ? new XmlSerializerNamespaces(new[] { XmlQualifiedName.Empty }) : null;
 
-            var settings = new XmlWriterSettings();
-            settings.Indent = true;
-            settings.OmitXmlDeclaration = omitXmlDeclaration;
-            settings.CheckCharacters = false;
+            XmlWriterSettings settings = new XmlWriterSettings
+            {
+                Indent = false,
+                OmitXmlDeclaration = omitXmlDeclaration,
+                CheckCharacters = false
+            };
 
-            using (var stream = new StringWriterWithEncoding(encoding))
-            using (var writer = XmlWriter.Create(stream, settings))
+            using (StringWriterWithEncoding stream = new StringWriterWithEncoding(encoding))
+            using (XmlWriter writer = XmlWriter.Create(stream, settings))
             {
                 var serializer = new XmlSerializer(value.GetType());
                 serializer.Serialize(writer, value, namespaces);
                 return stream.ToString();
             }
+        }
+
+        public static void FromXmlString<T>(this T value, string XMLString) where T : class
+        {
+            var serializer = new XmlSerializer(value.GetType());
+            T result;
+
+            using (StringReader reader = new StringReader(XMLString))
+            {
+                result = (T)serializer.Deserialize(reader);
+            }
+
+            value = result;
         }
     }
 }

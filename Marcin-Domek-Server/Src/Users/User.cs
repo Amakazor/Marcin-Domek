@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace Marcin_Domek_Server.Src.Users
@@ -21,6 +22,15 @@ namespace Marcin_Domek_Server.Src.Users
             Login = login;
         }
 
+        public User(User user)
+        {
+            Id = user.Id;
+            FirstName = user.FirstName;
+            LastName = user.LastName;
+            UserType = user.UserType;
+            Login = user.Login;
+        }
+
         public User(string login)
         {
             Dictionary<string, string> userData = DatabaseHandler.Instance().GetUserData(login);
@@ -32,7 +42,18 @@ namespace Marcin_Domek_Server.Src.Users
             Login = userData["Login"];
         }
 
-        private User()
+        public User(int id)
+        {
+            Dictionary<string, string> userData = DatabaseHandler.Instance().GetUserData(id);
+
+            Id = int.Parse(userData["UserID"]);
+            FirstName = userData["FirstName"];
+            LastName = userData["LastName"];
+            UserType = (UserType)int.Parse(userData["Type"]);
+            Login = userData["Login"];
+        }
+
+        public User()
         {
             Id = 0;
             FirstName = null;

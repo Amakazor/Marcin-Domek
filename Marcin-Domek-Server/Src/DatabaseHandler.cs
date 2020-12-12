@@ -77,17 +77,18 @@ namespace Marcin_Domek_Server.Src
             }
         }
 
-        public int AddUser(string firstName, string lastName, string login, string password)
+        public int AddUser(string firstName, string lastName, UserType userType, string login, string password)
         {
             if (!(firstName is null) && !(lastName is null) && !(login is null) && !(password is null))
             {
-                string query = "INSERT INTO user (`FirstName`, `LastName`, `Login`, `Password`) VALUES (@fname, @lname, @login, @password)";
+                string query = "INSERT INTO user (`FirstName`, `LastName`, `Type`, `Login`, `Password`) VALUES (@fname, @lname, @type, @login, @password)";
 
                 password = PasswordHasher.Hash(password);
 
                 MySqlCommand command = new MySqlCommand(query, Connection);
                 command.Parameters.AddWithValue("@fname", firstName);
                 command.Parameters.AddWithValue("@lname", lastName);
+                command.Parameters.AddWithValue("@type", (int)userType);
                 command.Parameters.AddWithValue("@login", login);
                 command.Parameters.AddWithValue("@password", password);
 
@@ -154,6 +155,23 @@ namespace Marcin_Domek_Server.Src
                 MySqlCommand command = new MySqlCommand(query, Connection);
                 command.Parameters.AddWithValue("@id", id);
                 command.Parameters.AddWithValue("@password", password);
+
+                return command.ExecuteNonQuery();
+            }
+            else
+            {
+                return -1;
+            }
+        } 
+        
+        public int ChangeUserType(int id, UserType type)
+        {
+            if (UserExists(id) == 1)
+            {
+                string query = "UPDATE user SET `Type` = @type WHERE `UserID` = @id";
+                MySqlCommand command = new MySqlCommand(query, Connection);
+                command.Parameters.AddWithValue("@id", id);
+                command.Parameters.AddWithValue("@type", (int)type);
 
                 return command.ExecuteNonQuery();
             }
@@ -240,7 +258,9 @@ namespace Marcin_Domek_Server.Src
                 if (dataReader.HasRows)
                 {
                     dataReader.Read();
-                    return Enumerable.Range(0, dataReader.FieldCount).ToDictionary(dataReader.GetName, dataReader.GetString);
+                    Dictionary<string, string> userData = Enumerable.Range(0, dataReader.FieldCount).ToDictionary(dataReader.GetName, dataReader.GetString);
+                    dataReader.Close();
+                    return userData;
                 }
                 else
                 {
@@ -260,6 +280,31 @@ namespace Marcin_Domek_Server.Src
             if (id > 0)
             {
                 return GetUserData(id);
+            }
+            else
+            {
+                throw new Exception();
+            }
+        }
+
+        public HashSet<int> GetAllUserIds()
+        {
+            string query = "SELECT `UserID` FROM user";
+            MySqlCommand command = new MySqlCommand(query, Connection);
+
+            MySqlDataReader dataReader = command.ExecuteReader();
+
+            if (dataReader.HasRows)
+            {
+                HashSet<int> ids = new HashSet<int>();
+
+                while (dataReader.Read())
+                {
+                    ids.Add(dataReader.GetInt32(0));
+                }
+
+                dataReader.Close();
+                return ids;
             }
             else
             {

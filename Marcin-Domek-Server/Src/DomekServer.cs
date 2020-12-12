@@ -67,7 +67,9 @@ namespace Marcin_Domek_Server.Src
             {
                 while (true)
                 {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
                     Console.WriteLine("Awaiting connection...");
+                    Console.ForegroundColor = ConsoleColor.White;
 
                     Socket clientSocket = ListnenerSocket.Accept();
 
@@ -94,16 +96,25 @@ namespace Marcin_Domek_Server.Src
                     {
                         Console.WriteLine("Text received: " + data);
 
-
-
                         response = ParseRequestAndGetResponse(data);
                     }
 
-                    byte[] message = Encoding.UTF8.GetBytes(response);
+                    Console.WriteLine("Response prepared: ");
+                    Console.WriteLine(response + "<EOF>");
+
+                    byte[] message = Encoding.UTF8.GetBytes(response + "<EOF>");
+
+                    Console.ForegroundColor = ConsoleColor.Blue;
+                    Console.WriteLine("Response sent.");
+                    Console.ForegroundColor = ConsoleColor.White;
 
                     clientSocket.Send(message);
                     clientSocket.Shutdown(SocketShutdown.Both);
                     clientSocket.Close();
+
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("Connection terminated.");
+                    Console.ForegroundColor = ConsoleColor.White;
                 }
             }
             catch (Exception e)
@@ -137,7 +148,7 @@ namespace Marcin_Domek_Server.Src
             }
             catch (Exception)
             {
-                return "<EOF>";
+                return "";
             }
 
             if (requestXML == null || requestXML.Root == null || requestXML.Root.Descendants().ToList().Count == 0 || requestXML.Root.Element("sessionid") == null) return "<EOF>";
@@ -207,12 +218,12 @@ namespace Marcin_Domek_Server.Src
         {
             return requestType switch
             {
-                RequestType.ListUsers => "1",
-                RequestType.AddUser => "2",
-                RequestType.DeleteUser => "3",
-                RequestType.ChangeUserPassword => "4",
-                RequestType.ChangeUserType => "5",
-                _ => "<error>Non existing task</error>"
+                RequestType.ListUsers => user.ListUsers(requestXML),
+                RequestType.AddUser => user.AddUser(requestXML),
+                RequestType.DeleteUser => user.DeleteUser(requestXML),
+                RequestType.ChangeUserPassword => user.ChangeUserPassword(requestXML),
+                RequestType.ChangeUserType => user.ChangeUserType(requestXML),
+                _ => "<error>Non existing admin task</error>"
             };
         }
 
@@ -224,7 +235,7 @@ namespace Marcin_Domek_Server.Src
                 RequestType.ChangeTicketPriority => "2",
                 RequestType.CompleteTicket => "3",
                 RequestType.ListTickets => "4",
-                _ => "<error>Non existing task</error>"
+                _ => "<error>Non existing helpdesk task</error>"
             };
         }
 
@@ -246,7 +257,7 @@ namespace Marcin_Domek_Server.Src
                 RequestType.ExportExpenses => "12",
                 RequestType.ImportIncome => "13",
                 RequestType.ExportIncome => "14",
-                _ => "<error>Non existing task</error>"
+                _ => "<error>Non existing user task</error>"
             };
         }
 
@@ -261,9 +272,9 @@ namespace Marcin_Domek_Server.Src
                 case 1:
                     Session newSession = CreateSession(login);
 
-                    Console.WriteLine("User " + login + " was successfully logged in. Session created.");
+                    Console.WriteLine("User " + login + " was successfully logged in. Session created. User permission level is: " + newSession.User.UserType.ToString());
 
-                    return "<response><sessionid>" + newSession.Sessionid + "</sessionid><user>" + newSession.User.ToXmlString() + "</user></response>";
+                    return "<response><sessionid>" + newSession.Sessionid + "</sessionid>" + new User(newSession.User).ToXmlString() + "</response>";
                 case 0:
                     Console.WriteLine("User " + login + " failed to log in. Wrong password.");
                     return "<response><reset>1</reset><reason>User failed to log in. Wrong password</reason></response>";
@@ -276,7 +287,7 @@ namespace Marcin_Domek_Server.Src
 
         private Session CreateSession(string login)
         {
-            Session session = new Session(Guid.NewGuid(), UserFactory.CreateUser(login), DateTime.Now);
+            Session session = new Session(Guid.Parse("fbb81ec5-c198-4306-a4f2-6bf6541b5613"), UserFactory.CreateUser(login), DateTime.Now);
             Sessions.Add(session);
             return session;
         }

@@ -35,7 +35,7 @@ namespace Marcin_Domek_Server.Src.Users
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
-                return "<error>Server encountered an error during listing users. Try again later.</error>";
+                return "<Error>Server encountered an error during listing users. Try again later.</Error>";
             }
 
             if (ids.Count > 0)
@@ -48,7 +48,7 @@ namespace Marcin_Domek_Server.Src.Users
             }
             else
             {
-                return "<error>No users.</error>";
+                return "<Message>No users.</Message>";
             }
         }
 
@@ -74,10 +74,10 @@ namespace Marcin_Domek_Server.Src.Users
             }
             else
             {
-                response = "<Message>User wasn't added. Missing data</Message>";
+                response = "<Error>User wasn't added. Missing data</Error>";
             }
 
-            return ListUsers(requestXML) + response;
+            return response;
         }
 
         internal string DeleteUser(XDocument requestXML)
@@ -92,7 +92,7 @@ namespace Marcin_Domek_Server.Src.Users
             }
             else
             {
-                response = "<Message>User wasn't deleted. Missing data</Message>";
+                response = "<Error>User wasn't deleted. Missing data</Error>";
             }
 
             return ListUsers(requestXML) + response;
@@ -111,7 +111,7 @@ namespace Marcin_Domek_Server.Src.Users
             }
             else
             {
-                response = "<Message>Users password wasn't changed. Missing data</Message>";
+                response = "<Error>Users password wasn't changed. Missing data</Error>";
             }
 
             return ListUsers(requestXML) + response;
@@ -130,7 +130,7 @@ namespace Marcin_Domek_Server.Src.Users
             }
             else
             {
-                response = "<Message>Users type wasn't changed. Missing data</Message>";
+                response = "<Error>Users type wasn't changed. Missing data</Error>";
             }
 
             return ListUsers(requestXML) + response;

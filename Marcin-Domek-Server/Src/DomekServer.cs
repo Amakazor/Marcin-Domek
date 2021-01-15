@@ -5,10 +5,8 @@ using System.Net.Sockets;
 using System.Net;
 using System.Xml.Linq;
 using System.Linq;
-using System.Linq.Expressions;
 using Marcin_Domek_Server.Src.Users;
 using Marcin_Domek_Server.Src.Extension;
-using System.Data;
 using Marcin_Domek_Server.Src.Requests;
 
 namespace Marcin_Domek_Server.Src
@@ -151,7 +149,7 @@ namespace Marcin_Domek_Server.Src
                 return "";
             }
 
-            if (requestXML == null || requestXML.Root == null || requestXML.Root.Descendants().ToList().Count == 0 || requestXML.Root.Element("sessionid") == null) return "<EOF>";
+            if (requestXML == null || requestXML.Root == null || requestXML.Root.Descendants().ToList().Count == 0 || requestXML.Root.Element("sessionid") == null) return "<response><reset>1</reset><reason>Empty request</reason></response>";
 
             Guid sessionid = Guid.Empty;
             sessionid = sessionid.ParseOrEmpty(requestXML.Root.Element("sessionid").Value);
@@ -174,7 +172,7 @@ namespace Marcin_Domek_Server.Src
                     Session session = GetSession(sessionid);
                     UpdateSessionTime(session);
 
-                    RequestType requestType = (RequestType)int.Parse(requestXML.Root.Element("type").Value);
+                    RequestType requestType = Enum.Parse<RequestType>(requestXML.Root.Element("type").Value, true);
 
                     if (requestType == RequestType.Logout)
                     {
@@ -185,9 +183,9 @@ namespace Marcin_Domek_Server.Src
                     {
                         return "<response><sessionid>" + sessionid + "</sessionid>" + (session.User switch
                         {
-                            Admin user => ParseAdminRequest(requestXML, user, requestType),
-                            Helpdesk user => ParseHelpdeskRequest(requestXML, user, requestType),
-                            User user => ParseUserRequest(requestXML, user, requestType),
+                            Admin user      => ParseAdminRequest(requestXML, user, requestType),
+                            Helpdesk user   => ParseHelpdeskRequest(requestXML, user, requestType),
+                            User user       => ParseUserRequest(requestXML, user, requestType),
                             _ => throw new Exception()
                         }) + "</response>";
                     }
@@ -218,11 +216,11 @@ namespace Marcin_Domek_Server.Src
         {
             return requestType switch
             {
-                RequestType.ListUsers => user.ListUsers(requestXML),
-                RequestType.AddUser => user.AddUser(requestXML),
-                RequestType.DeleteUser => user.DeleteUser(requestXML),
-                RequestType.ChangeUserPassword => user.ChangeUserPassword(requestXML),
-                RequestType.ChangeUserType => user.ChangeUserType(requestXML),
+                RequestType.ListUsers           => user.ListUsers(requestXML),
+                RequestType.AddUser             => user.AddUser(requestXML),
+                RequestType.DeleteUser          => user.DeleteUser(requestXML),
+                RequestType.ChangeUserPassword  => user.ChangeUserPassword(requestXML),
+                RequestType.ChangeUserType      => user.ChangeUserType(requestXML),
                 _ => "<error>Non existing admin task</error>"
             };
         }
@@ -231,10 +229,13 @@ namespace Marcin_Domek_Server.Src
         {
             return requestType switch
             {
-                RequestType.ApplyTicketToSelf => "1",
-                RequestType.ChangeTicketPriority => "2",
-                RequestType.CompleteTicket => "3",
-                RequestType.ListTickets => "4",
+                RequestType.ApplyTicketToSelf   => user.ApplyTicketToSelf(requestXML),
+                RequestType.ReleaseTicket       => user.ReleaseTicket(requestXML),
+                RequestType.RejectTicket        => user.RejectTicket(requestXML),
+                RequestType.CompleteTicket      => user.CompleteTicket(requestXML),
+                RequestType.ListTickets         => user.ListTickets(requestXML),
+                RequestType.ListMyTickets       => user.ListMyTickets(requestXML),
+                RequestType.ListUnclaimedTickets=> user.ListUnclaimedTickets(requestXML),
                 _ => "<error>Non existing helpdesk task</error>"
             };
         }
@@ -243,20 +244,20 @@ namespace Marcin_Domek_Server.Src
         {
             return requestType switch
             {
-                RequestType.ListTickets => "1",
-                RequestType.CreateTicket => "2",
-                RequestType.CreateExpense => "3",
-                RequestType.DeleteExpense => "4",
-                RequestType.EditExpense => "5",
-                RequestType.ListExpenses => "6",
-                RequestType.CreateIncome => "7",
-                RequestType.DeleteIncome => "8",
-                RequestType.EditIncome => "9",
-                RequestType.ListIncome => "10",
-                RequestType.ImportExpenses => "11",
-                RequestType.ExportExpenses => "12",
-                RequestType.ImportIncome => "13",
-                RequestType.ExportIncome => "14",
+                RequestType.ListTickets         => user.ListTickets(requestXML),
+                RequestType.CreateTicket        => user.CreateTicket(requestXML),
+                RequestType.CreateExpense       => user.CreateExpense(requestXML),
+                RequestType.DeleteExpense       => user.DeleteExpense(requestXML),
+                RequestType.EditExpense         => user.EditExpense(requestXML),
+                RequestType.ListExpenses        => user.ListExpenses(requestXML),
+                RequestType.CreateIncome        => user.CreateIncome(requestXML),
+                RequestType.DeleteIncome        => user.DeleteIncome(requestXML),
+                RequestType.EditIncome          => user.EditIncome(requestXML),
+                RequestType.ListIncome          => user.ListIncome(requestXML),
+                RequestType.ImportExpenses      => user.ImportExpenses(requestXML),
+                RequestType.ImportIncome        => user.ImportIncome(requestXML),
+                RequestType.SearchExpenses      => user.SearchExpenses(requestXML),
+                RequestType.SearchIncome        => user.SearchIncome(requestXML),
                 _ => "<error>Non existing user task</error>"
             };
         }
@@ -278,7 +279,6 @@ namespace Marcin_Domek_Server.Src
                 case 0:
                     Console.WriteLine("User " + login + " failed to log in. Wrong password.");
                     return "<response><reset>1</reset><reason>User failed to log in. Wrong password</reason></response>";
-                case -1:
                 default:
                     Console.WriteLine("User " + login + " doesn't exist.");
                     return "<response><reset>1</reset><reason>User failed to log in. Wrong login</reason></response>";
@@ -287,7 +287,7 @@ namespace Marcin_Domek_Server.Src
 
         private Session CreateSession(string login)
         {
-            Session session = new Session(Guid.Parse("fbb81ec5-c198-4306-a4f2-6bf6541b5613"), UserFactory.CreateUser(login), DateTime.Now);
+            Session session = new Session(Guid.NewGuid(), UserFactory.CreateUser(login), DateTime.Now);
             Sessions.Add(session);
             return session;
         }

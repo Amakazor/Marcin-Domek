@@ -1,17 +1,19 @@
 ﻿using Marcin_Domek_Server.Src.Users;
 using System;
 
-internal struct Session
+namespace Marcin_Domek_Server.Src
 {
-    public Guid Sessionid { get; set; }
-    public User User { get; set; }
-    public DateTime LastUpdate { get; set; }
-
-    public Session(Guid sessionid, User user, DateTime lastUpdate)
+    internal struct Session
     {
-        Sessionid = sessionid;
-        User = user;
-        LastUpdate = lastUpdate;
-    }
+        public Guid Sessionid { get; set; }
+        public User User { get; set; }
+        public DateTime LastUpdate { get; set; }
 
+        public Session(Guid sessionid, User user, DateTime lastUpdate)
+        {
+            Sessionid = sessionid;
+            User = user;
+            LastUpdate = lastUpdate;
+        }
+    }
 }

@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Text;
 
-namespace Marcin_Domek_Server.Src
+namespace Marcin_Domek_Console.Src
 {
     internal class StringWriterWithEncoding : StringWriter
     {

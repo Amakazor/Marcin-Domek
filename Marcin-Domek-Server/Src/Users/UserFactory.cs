@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Marcin_Domek_Server.Src.Users
+﻿namespace Marcin_Domek_Server.Src.Users
 {
     internal static class UserFactory
     {
